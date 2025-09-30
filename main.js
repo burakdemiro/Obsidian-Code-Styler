@@ -18218,7 +18218,22 @@ function createHeader(codeblockParameters, themeSettings, sourcePath, plugin) {
 }
 function createTitleContainer(codeblockParameters, themeSettings, sourcePath, plugin) {
   const titleContainer = createDiv({ cls: "code-styler-header-text" });
-  const title = codeblockParameters.title || (codeblockParameters.fold.enabled ? codeblockParameters.fold.placeholder || themeSettings.header.foldPlaceholder || FOLD_PLACEHOLDER : "");
+  
+  let title = codeblockParameters.title;
+  if (!title && codeblockParameters.reference && codeblockParameters.reference !== "") {
+    const refPath = codeblockParameters.reference;
+    
+    if (refPath.includes("/")) {
+      title = refPath.split("/").pop();
+    } else {
+      title = refPath;
+    }
+  }
+  
+  if (!title) {
+    title = codeblockParameters.fold.enabled ? codeblockParameters.fold.placeholder || themeSettings.header.foldPlaceholder || FOLD_PLACEHOLDER : "";
+  }
+
   if (codeblockParameters.reference === "")
     titleContainer.innerText = title;
   else if (/^(?:https?|file):\/\//.test(codeblockParameters.reference))
@@ -18679,7 +18694,20 @@ async function getReference(codeblockLines, sourcePath, plugin) {
     path: ""
   };
   try {
-    const referenceParameters = parseReferenceParameters(codeblockLines.slice(1, -1).join("\n"));
+    let sourceYAML = codeblockLines.slice(1, -1).join("\n");
+    
+    sourceYAML = sourceYAML
+      .replace(/^\s*>?\s*```reference\s+fold\s*\n?/gm, '')
+      .replace(/^\s*>\s*/gm, '')
+      .replace(/^\s+/gm, '')
+      .trim();
+    
+    if (!sourceYAML) {
+      return reference;
+    }
+    
+    const referenceParameters = parseReferenceParameters(sourceYAML);
+
     reference.language = referenceParameters.language;
     reference.path = referenceParameters.filePath;
     if (/^https?:\/\//.test(referenceParameters.filePath)) {
@@ -18969,8 +18997,12 @@ async function adjustReference(codeblockParameters, codeblockLines, sourcePath, 
   }
   if (codeblockParameters.title === "")
     codeblockParameters.title = (_c = (_b = (_a2 = reference.external) == null ? void 0 : _a2.info) == null ? void 0 : _b.title) != null ? _c : (0, import_path.basename)(reference.path);
-  if (codeblockParameters.reference === "")
-    codeblockParameters.reference = (_i = (_h = (_e = (_d = reference.external) == null ? void 0 : _d.info) == null ? void 0 : _e.displayUrl) != null ? _h : (_g = (_f = reference.external) == null ? void 0 : _f.info) == null ? void 0 : _g.url) != null ? _i : plugin.app.vault.adapter.getFilePath(reference.path);
+  
+  if (codeblockParameters.reference === "") {
+    const externalRef = (_i = (_h = (_e = (_d = reference.external) == null ? void 0 : _d.info) == null ? void 0 : _e.displayUrl) != null ? _h : (_g = (_f = reference.external) == null ? void 0 : _f.info) == null ? void 0 : _g.url) != null ? _i : null;
+    codeblockParameters.reference = externalRef || reference.path;
+  }
+
   codeblockParameters.language = reference.language;
   if (reference.external)
     codeblockParameters.externalReference = reference;
