@@ -1046,6 +1046,32 @@ div.print {
   width: 14.25em;
   max-width: 95vw;
 }
+
+/* MOBILE FIX: Mobile cihazlarda reference fold kod bloklarının header'ının görünmesi için */
+@media (max-width: 768px) {
+  .code-styler-header-container {
+    display: flex !important;
+    visibility: visible !important;
+  }
+  
+  .code-styler-header-container-hidden {
+    display: flex !important;
+    visibility: visible !important;
+  }
+  
+  /* Mobile'da header text'in görünmesi için */
+  .code-styler-header-text {
+    min-height: 1.2em;
+    display: flex !important;
+  }
+  
+  /* Mobile'da fold placeholder'ının görünmesi için */
+  .code-styler-header-text:empty::before {
+    content: "Folded Code";
+    color: var(--code-styler-header-title-text-colour);
+    font-style: italic;
+  }
+}
 .pcr-app[data-theme=nano] .pcr-swatches {
   padding: 0 .6em;
   margin-top: .6em;
